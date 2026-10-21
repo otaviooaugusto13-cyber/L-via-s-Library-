@@ -278,13 +278,71 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-// ABRIR E RENDERIZAR O LEITOR DE EPUB REAL
+// ABRIR LEITOR DE EPUB EM TELA CHEIA 3D
 function openReader() {
   const book = books.find(b => b.id === selectedBookId);
   if (!book || !book.epubData) {
-    alert('O arquivo .epub deste livro não foi encontrado ou não é suportado.');
+    alert('Arquivo .epub não encontrado.');
     return;
   }
+
+  document.getElementById('readerBookTitle').textContent = book.title;
+  document.getElementById('readerModal').classList.add('active');
+
+  const viewer = document.getElementById('epubViewer');
+  viewer.innerHTML = '<p style="text-align:center; padding-top:40vh; opacity:0.6; color:#c084fc;">Abrindo livro...</p>';
+
+  try {
+    const bookData = base64ToArrayBuffer(book.epubData);
+
+    if (currentRendition) {
+      currentRendition.destroy();
+    }
+
+    currentEpubBook = ePub(bookData);
+    
+    // Configura o leitor para ocupar 100% da tela do celular com efeito de paginação
+    currentRendition = currentEpubBook.renderTo("epubViewer", {
+      width: "100%",
+      height: "100%",
+      flow: "paginated", // Modo página a página (estilo livro)
+      manager: "continuous"
+    });
+
+    // Estilização aconchegante para leitura noturna/diurna
+    currentRendition.themes.default({
+      'p': { 'color': '#e2e8f0 !important', 'font-size': '1.05rem !important', 'line-height': '1.6 !important', 'text-align': 'justify !important' },
+      'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important', 'padding': '20px !important' },
+      'h1, h2, h3': { 'color': '#c084fc !important', 'font-family': 'Playfair Display, serif !important' }
+    });
+
+    viewer.innerHTML = '';
+    currentRendition.display();
+
+    // Suporte a toque nas bordas da tela (Toque na direita avança, toque na esquerda volta)
+    document.getElementById('touchNext').onclick = () => currentRendition.next();
+    document.getElementById('touchPrev').onclick = () => currentRendition.prev();
+
+    // Suporte a gesto de arrastar / deslizar o dedo (Swipe) na tela do celular
+    let startX = 0;
+    viewer.addEventListener('touchstart', (e) => {
+      startX = e.changedTouches[0].screenX;
+    }, false);
+
+    viewer.addEventListener('touchend', (e) => {
+      let endX = e.changedTouches[0].screenX;
+      if (startX - endX > 50) {
+        currentRendition.next(); // Deslizou para a esquerda -> Próxima página
+      } else if (endX - startX > 50) {
+        currentRendition.prev(); // Deslizou para a direita -> Página anterior
+      }
+    }, false);
+
+  } catch (err) {
+    console.error(err);
+    viewer.innerHTML = `<div style="padding-top:40vh; text-align:center; color:#fff;"><p>Não foi possível carregar este .EPUB.</p></div>`;
+  }
+}
 
   document.getElementById('readerBookTitle').textContent = book.title;
   document.getElementById('readerModal').classList.add('active');
