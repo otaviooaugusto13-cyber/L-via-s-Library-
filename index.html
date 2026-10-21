@@ -176,21 +176,20 @@
     </div>
   </div>
 
- <!-- MODAL: LEITOR DE EPUB COM CONTROLES -->
-  <div id="readerModal" class="modal fullscreen">
-    <div class="modal-content fullscreen">
-      <div class="reader-header">
-        <button id="closeReaderModal" class="btn-secondary">← Voltar</button>
-        <h3 id="readerBookTitle">Título</h3>
-        <button id="readerToNotesBtn" class="btn-soft">📖 Diário de Leitura</button>
-      </div>
-      <div class="reader-body">
-        <div id="epubViewer" class="epub-viewer"></div>
-        <div class="reader-controls">
-          <button id="prevPageBtn" class="btn-soft-sm">◀ Página Anterior</button>
-          <button id="nextPageBtn" class="btn-soft-sm">Próxima Página ▶</button>
-        </div>
-      </div>
+  <!-- MODAL: LEITOR DE EPUB TELA CHEIA 3D / MOBILE FIRST -->
+  <div id="readerModal" class="modal fullscreen-reader">
+    <div class="reader-top-bar">
+      <button id="closeReaderModal" class="btn-icon-back">✕ Voltar</button>
+      <h3 id="readerBookTitle">Leitura</h3>
+      <button id="readerToNotesBtn" class="btn-icon-notes">📖 Diário</button>
+    </div>
+    
+    <div class="reader-container-3d">
+      <div id="epubViewer" class="epub-viewer-fullscreen"></div>
+      
+      <!-- Zonas de toque invisíveis nas bordas para virar a página com o dedo -->
+      <div id="touchPrev" class="touch-zone left"></div>
+      <div id="touchNext" class="touch-zone right"></div>
     </div>
   </div>
 
