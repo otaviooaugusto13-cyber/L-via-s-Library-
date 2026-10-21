@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lívia's Library 💜</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- EPUB.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+</head>
+<body class="dark-theme">
+
+  <!-- CANVAS DA GALÁXIA DE PARTÍCULAS / POEIRA ESTELAR NO FUNDO -->
+  <canvas id="galaxyCanvas"></canvas>
+
+  <!-- Header Fixo Minimalista -->
+  <header class="navbar">
+    <div class="logo">
+      <span class="logo-heart">✨</span>
+      <h1>Lívia's <span>Library</span></h1>
+    </div>
+    <div class="nav-search">
+      <input type="text" id="searchInput" placeholder="Buscar livro no acervo...">
+    </div>
+    <button id="openAddModal" class="btn-soft">+ Adicionar .EPUB</button>
+  </header>
+
+  <main class="main-content">
+
+    <!-- HERO BANNER (EXIBIDO SE HOUVER LIVROS) -->
+    <section id="heroSection" class="hero-banner" style="display: none;">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-poster-wrapper">
+          <img id="heroCover" src="" alt="Capa" class="hero-poster">
+        </div>
+        <div class="hero-details">
+          <span class="badge-status" id="heroStatus">🌸 LENDO AGORA</span>
+          <h2 id="heroTitle" class="hero-title">Título do Livro</h2>
+          <p id="heroAuthor" class="hero-author">por Autor</p>
+
+          <div class="hero-meta">
+            <span id="heroRating" class="rating-stars">💖💖💖💖💖</span>
+            <span class="meta-dot">•</span>
+            <span id="heroProgress">Leitura Ativa</span>
+          </div>
+
+          <div class="hero-summary-box">
+            <h4>✨ Sinopse & Destaque do Diário:</h4>
+            <p id="heroSummary">Abertura do livro selecionado...</p>
+          </div>
+
+          <div class="hero-buttons">
+            <button id="heroReadBtn" class="btn-primary-lg">▶ Ler .EPUB</button>
+            <button id="heroNotesBtn" class="btn-secondary-lg">📖 Diário de Leitura</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTADO VAZIO (ZERO FAKE DATA) -->
+    <section id="emptyState" class="empty-state">
+      <div class="empty-card">
+        <div class="empty-icon">📖✨</div>
+        <h2>Sua Biblioteca está Prontinha, Lívia!</h2>
+        <p>Arraste seus arquivos <strong>.EPUB</strong> para cá ou clique no botão abaixo para catalogar seus livros reais.</p>
+        <button id="emptyAddBtn" class="btn-soft-lg">+ Adicionar Primeiro .EPUB 💜</button>
+      </div>
+    </section>
+
+    <!-- TRILHOS NETFLIX (POR CATEGORIA) -->
+    <section id="carouselsContainer" class="carousels-container" style="display: none;">
+      
+      <div id="romance" class="carousel-section">
+        <div class="section-header">
+          <h3>💖 Romance</h3>
+        </div>
+        <div id="trackRomance" class="carousel-track"></div>
+      </div>
+
+      <div id="best" class="carousel-section">
+        <div class="section-header">
+          <h3>✨ Destaques & Favoritos</h3>
+        </div>
+        <div id="trackBest" class="carousel-track"></div>
+      </div>
+
+      <div id="suspense" class="carousel-section">
+        <div class="section-header">
+          <h3>🕵️‍♀️ Suspense & Mistério</h3>
+        </div>
+        <div id="trackSuspense" class="carousel-track"></div>
+      </div>
+
+      <div id="terror" class="carousel-section">
+        <div class="section-header">
+          <h3>👻 Terror & Obscuro</h3>
+        </div>
+        <div id="trackTerror" class="carousel-track"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- BARRA INFERIOR DELICADA (BOTTOM NAV OUTLINE) -->
+  <nav class="bottom-nav">
+    <a href="#" class="nav-item active" title="Início">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+    </a>
+    <a href="#romance" class="nav-item" title="Gêneros">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+    </a>
+    
+    <!-- BOTÃO FLUTUANTE ELEVADO (FAB) -->
+    <button id="mobileFabBtn" class="fab-btn" title="Adicionar EPUB">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <a href="#best" class="nav-item" title="Favoritos">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+    </a>
+    <a href="#" id="mobileNotesBtn" class="nav-item" title="Diário">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+    </a>
+  </nav>
+
+  <!-- MODAL: DETALHES DO LIVRO -->
+  <div id="detailModal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close-modal" id="closeDetailModal">&times;</span>
+      <div class="detail-wrapper">
+        <img id="detailCover" src="" alt="Capa" class="detail-poster">
+        <div class="detail-info">
+          <span id="detailCategory" class="badge-category">ROMANCE</span>
+          <h2 id="detailTitle" class="detail-title">Título do Livro</h2>
+          <p id="detailAuthor" class="detail-author">por Autor</p>
+          <div id="detailRating" class="rating-stars">💖💖💖💖💖</div>
+          
+          <div class="bio-box">
+            <h4>📖 Sinopse & Apresentação:</h4>
+            <p id="detailBio">Aguardando arquivo .epub...</p>
+          </div>
+
+          <div class="detail-actions">
+            <button id="openReaderBtn" class="btn-primary-lg">▶ Abrir .EPUB</button>
+            <button id="openNotesBtn" class="btn-secondary-lg">📖 Diário de Leitura</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: UPLOAD DE EPUB -->
+  <div id="addModal" class="modal">
+    <div class="modal-content aesthetic-card">
+      <div class="modal-header">
+        <h2>Adicionar .EPUB à Estante ✨</h2>
+        <span class="close-modal" id="closeAddModal">&times;</span>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">📚</div>
+        <p class="dropzone-title">Arraste seu arquivo <strong>.EPUB</strong> aqui</p>
+        <span class="dropzone-sub">ou clique para selecionar do celular ou computador</span>
+        <input type="file" id="bookEpubInput" accept=".epub" multiple style="display:none;">
+      </div>
+      <div id="uploadStatus" class="upload-status" style="display:none;">
+        <span class="spinner">✨</span> Lendo o livro e extraindo capa e sinopse com IA...
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LEITOR DE EPUB -->
+  <div id="readerModal" class="modal fullscreen">
+    <div class="modal-content fullscreen">
+      <div class="reader-header">
+        <button id="closeReaderModal" class="btn-secondary">← Voltar</button>
+        <h3 id="readerBookTitle">Título</h3>
+        <button id="readerToNotesBtn" class="btn-soft">📖 Diário de Leitura</button>
+      </div>
+      <div class="reader-body">
+        <div id="epubViewer" class="epub-viewer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DIÁRIO DE LEITURA AESTHETIC -->
+  <div id="notesModal" class="modal">
+    <div class="modal-content large journal-card">
+      <div class="modal-header journal-header">
+        <div>
+          <h2>📖 Caderno de Leitura da Lívia</h2>
+          <span id="journalBookSub" class="journal-sub">Livro Selecionado</span>
+        </div>
+        <span class="close-modal" id="closeNotesModal">&times;</span>
+      </div>
+
+      <div class="journal-body">
+        
+        <!-- BLOCO 1: AVALIAÇÃO & DADOS DO LIVRO -->
+        <div class="journal-row">
+          <div class="journal-box">
+            <label>Sua Nota / Avaliação:</label>
+            <div class="rating-picker" id="ratingPicker">
+              <span data-rate="1">💖</span>
+              <span data-rate="2">💖</span>
+              <span data-rate="3">💖</span>
+              <span data-rate="4">💖</span>
+              <span data-rate="5">💖</span>
+            </div>
+          </div>
+
+          <div class="journal-box">
+            <label>Vibe Check / Sentimento:</label>
+            <select id="vibeSelect" class="journal-input">
+              <option value="Coração quentinho 💖">Coração quentinho 💖</option>
+              <option value="Chorei litros 😭">Chorei litros 😭</option>
+              <option value="Fiquei chocada 🤯">Fiquei chocada 🤯</option>
+              <option value="Favorito da vida ✨">Favorito da vida ✨</option>
+              <option value="Leitura viciante 🔥">Leitura viciante 🔥</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- BLOCO 2: O QUE MAIS ME ENCANTOU -->
+        <div class="journal-box">
+          <label>🌸 O que mais gostei e me encantou na história:</label>
+          <textarea id="bestPartText" rows="3" class="journal-input" placeholder="Escreva sobre a cena favorita, o casal ou o que mais marcou você nesse livro..."></textarea>
+        </div>
+
+        <!-- BLOCO 3: PERSONAGEM FAVORITO E CITAÇÃO MARCANTE -->
+        <div class="journal-row">
+          <div class="journal-box">
+            <label>👑 Personagem Favorito(a):</label>
+            <input type="text" id="favCharInput" class="journal-input" placeholder="Ex: Frodo, Lily, Daemon...">
+          </div>
+          <div class="journal-box">
+            <label>💬 Citação Inesquecível:</label>
+            <input type="text" id="favQuoteInput" class="journal-input" placeholder="Uma frase marcante do livro...">
+          </div>
+        </div>
+
+        <!-- BLOCO 4: MURAL DE POST-ITS / NOTAS DE CAPÍTULO -->
+        <div class="journal-section">
+          <div class="section-title-row">
+            <h3>📌 Post-its e Anotações por Capítulo</h3>
+            <button id="addPostitBtn" class="btn-soft-sm">+ Novo Post-it 💜</button>
+          </div>
+          <div class="add-postit-box" id="addPostitBox" style="display:none;">
+            <textarea id="newPostitText" class="journal-input" placeholder="Escreva uma observação ou lembrete rápido..."></textarea>
+            <div class="postit-actions">
+              <label><input type="checkbox" id="spoilerCheck"> Contém Spoiler 🙈</label>
+              <button id="savePostitBtn" class="btn-soft-sm">Fixar Post-it</button>
+            </div>
+          </div>
+          <div id="postitsGrid" class="postits-grid"></div>
+        </div>
+
+        <hr class="journal-divider">
+
+        <!-- BLOCO 5: IA SINTETIZADORA DE RESUMO & EXPORTAR -->
+        <div class="journal-section">
+          <div class="section-title-row">
+            <h3>🤖 Resumo Estruturado com IA</h3>
+            <button id="generateAiSummaryBtn" class="btn-accent">Gerar com IA ✨</button>
+          </div>
+          <textarea id="finalSummaryText" rows="4" class="journal-input" placeholder="O resumo poético e completo gerado pela IA aparecerá aqui..."></textarea>
+        </div>
+
+        <div class="journal-footer">
+          <button id="saveJournalBtn" class="btn-primary-lg full-width">Salvar no Caderno de Leitura 💜</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
