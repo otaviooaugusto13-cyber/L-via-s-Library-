@@ -294,3 +294,23 @@ body {
   .card-poster, .card-poster-fallback { height: 200px; }
   .journal-row { flex-direction: column; gap: 10px; }
 }
+
+/* ESTILOS DO LEITOR DE EPUB */
+.epub-viewer {
+  width: 100%;
+  max-width: 800px;
+  height: 70vh;
+  background: #0c0814;
+  border-radius: 14px;
+  border: 1px solid var(--border-glass);
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.reader-controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
