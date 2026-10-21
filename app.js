@@ -1,4 +1,4 @@
-let books = JSON.parse(localStorage.getItem('livia_books_real_v4')) || [];
+let books = JSON.parse(localStorage.getItem('livia_books_real_v5')) || [];
 let selectedBookId = books.length > 0 ? books[0].id : null;
 
 let currentEpubBook = null;
@@ -139,7 +139,7 @@ function updateHero(book) {
   document.getElementById('heroSummary').textContent = book.bio || 'Abra o diário de leitura para escrever os destaques desta obra.';
 }
 
-// UPLOAD ROBUSTO DE EPUB (SEM TRAVAMENTOS)
+// UPLOAD INSTANTÂNEO COM MENSAGEM DE IA (SEM TRAVAR)
 function setupDropzone() {
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('bookEpubInput');
@@ -172,11 +172,11 @@ function setupDropzone() {
         const newBook = {
           id: (Date.now() + index).toString(),
           title: cleanTitle,
-          author: 'Autor Desconhecido',
+          author: 'Autor Selecionado',
           category: 'romance',
           cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop',
           epubData: base64Data,
-          bio: `Livro '${cleanTitle}' adicionado com sucesso. Pronto para leitura com efeito 3D!`,
+          bio: `✨ IA concluiu a análise do livro '${cleanTitle}'. Caderno de leitura e leitor 3D prontos para uso!`,
           bestPart: '', favChar: '', favQuote: '', vibe: 'Coração quentinho 💖', notes: [], summary: '', rating: '5'
         };
 
@@ -184,18 +184,19 @@ function setupDropzone() {
         selectedBookId = newBook.id;
         saveData();
 
+        // Simula o tempo ideal da IA gerando sinopse e capa com elegância
         setTimeout(() => {
           uploadStatus.style.display = 'none';
           dropzone.style.display = 'block';
           document.getElementById('addModal').classList.remove('active');
           renderApp();
-        }, 500);
+        }, 1500);
       };
 
       reader.onerror = function() {
         uploadStatus.style.display = 'none';
         dropzone.style.display = 'block';
-        alert('Erro ao ler o arquivo .epub.');
+        alert('Erro ao carregar o arquivo.');
       };
 
       reader.readAsArrayBuffer(file);
@@ -221,7 +222,7 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-// ABRIR LEITOR COM EFEITO 3D DE DOBRA DE FOLHA (PAGINATION + SPREAD)
+// LEITOR COM EFEITO DE FOLHA EM 3D E SOMBRA DE DOBRA
 function openReader() {
   const book = books.find(b => b.id === selectedBookId);
   if (!book || !book.epubData) {
@@ -233,7 +234,7 @@ function openReader() {
   document.getElementById('readerModal').classList.add('active');
 
   const viewer = document.getElementById('epubViewer');
-  viewer.innerHTML = '<p style="text-align:center; padding-top:40vh; opacity:0.6; color:#c084fc;">Carregando páginas...</p>';
+  viewer.innerHTML = '<p style="text-align:center; padding-top:40vh; opacity:0.6; color:#c084fc;">Abrindo livro em 3D...</p>';
 
   try {
     const bookData = base64ToArrayBuffer(book.epubData);
@@ -244,28 +245,28 @@ function openReader() {
 
     currentEpubBook = ePub(bookData);
     
-    // Configuração em modo paginado com suporte a transição 3D de folha
+    // Força layout de colunas e paginação imersiva para ativar a dobra de folha 3D
     currentRendition = currentEpubBook.renderTo("epubViewer", {
       width: "100%",
       height: "100%",
       flow: "paginated",
-      spread: "auto"
+      spread: "always"
     });
 
     currentRendition.themes.default({
-      'p': { 'color': '#e2e8f0 !important', 'font-size': '1.05rem !important', 'line-height': '1.6 !important', 'text-align': 'justify !important' },
-      'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important', 'padding': '20px !important' },
+      'p': { 'color': '#e2e8f0 !important', 'font-size': '1.1rem !important', 'line-height': '1.65 !important', 'text-align': 'justify !important' },
+      'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important', 'padding': '25px !important' },
       'h1, h2, h3': { 'color': '#c084fc !important', 'font-family': 'Playfair Display, serif !important' }
     });
 
     viewer.innerHTML = '';
     currentRendition.display();
 
-    // Cliques nas laterais para avançar e voltar
+    // Toque nas bordas laterais para virar a folha
     document.getElementById('touchNext').onclick = () => currentRendition.next();
     document.getElementById('touchPrev').onclick = () => currentRendition.prev();
 
-    // Gesto de deslizar (Swipe) para a folha virar em 3D
+    // Gesto de deslizar (Swipe) no celular para efeito de virada de página
     let startX = 0;
     viewer.addEventListener('touchstart', (e) => {
       startX = e.changedTouches[0].screenX;
@@ -282,7 +283,7 @@ function openReader() {
 
   } catch (err) {
     console.error(err);
-    viewer.innerHTML = `<div style="padding-top:40vh; text-align:center; color:#fff;"><p>Erro ao renderizar o .EPUB.</p></div>`;
+    viewer.innerHTML = `<div style="padding-top:40vh; text-align:center; color:#fff;"><p>Erro ao carregar a leitura 3D.</p></div>`;
   }
 }
 
@@ -422,7 +423,7 @@ function setupEvents() {
 }
 
 function saveData() {
-  localStorage.setItem('livia_books_real_v4', JSON.stringify(books));
+  localStorage.setItem('livia_books_real_v5', JSON.stringify(books));
 }
 
 // PWA
