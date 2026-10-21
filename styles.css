@@ -311,10 +311,10 @@ body {
   .card-poster, .card-poster-fallback { height: 160px; }
   .journal-row { flex-direction: column; gap: 8px; }
 }
-/* EFEITO DE SOMBRA DA FOLHA 3D NO LEITOR ESTILO GOOGLE PLAY / KINDLE */
+/* EFEITO DE DOBRA E SOMBRA DA FOLHA 3D (ESTILO GOOGLE PLAY / LIVRO FÍSICO) */
 .epub-viewer-fullscreen iframe {
-  box-shadow: inset -35px 0 50px rgba(0, 0, 0, 0.5), 15px 0 30px rgba(0, 0, 0, 0.3) !important;
-  transition: transform 0.3s ease-in-out;
+  box-shadow: inset -45px 0 60px rgba(0, 0, 0, 0.55), 20px 0 35px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .modal.fullscreen-reader {
