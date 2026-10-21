@@ -1,7 +1,10 @@
-// --- ESTANTE INICIALMENTE 100% LIMPA (ZERO FAKE DATA) ---
-let books = JSON.parse(localStorage.getItem('livia_books_real_v1')) || [];
-
+// --- ESTANTE E BANCO LOCAL ---
+let books = JSON.parse(localStorage.getItem('livia_books_real_v2')) || [];
 let selectedBookId = books.length > 0 ? books[0].id : null;
+
+// Objeto global para controlar o leitor do EPUBJS
+let currentEpubBook = null;
+let currentRendition = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initGalaxyBackground();
@@ -11,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupRatingPicker();
 });
 
-// ANIMADOR DE PARTÍCULAS DE GALÁXIA (POEIRA ESTELAR ROXA/BRANCA)
+// ANIMADOR DE PARTÍCULAS DE GALÁXIA
 function initGalaxyBackground() {
   const canvas = document.getElementById('galaxyCanvas');
   if (!canvas) return;
@@ -26,13 +29,12 @@ function initGalaxyBackground() {
   });
 
   const particles = [];
-  const particleCount = Math.floor((width * height) / 12000); // Proporcional à tela
-
+  const particleCount = Math.floor((width * height) / 12000);
   const colors = [
-    'rgba(255, 255, 255, ',    // Branco
-    'rgba(233, 213, 255, ',    // Lilás Pastel
-    'rgba(192, 132, 252, ',    // Lilás Neon
-    'rgba(147, 51, 234, '      // Roxo Deep
+    'rgba(255, 255, 255, ',
+    'rgba(233, 213, 255, ',
+    'rgba(192, 132, 252, ',
+    'rgba(147, 51, 234, '
   ];
 
   for (let i = 0; i < particleCount; i++) {
@@ -43,7 +45,7 @@ function initGalaxyBackground() {
       colorPrefix: colors[Math.floor(Math.random() * colors.length)],
       alpha: Math.random() * 0.7 + 0.2,
       speedX: (Math.random() - 0.5) * 0.3,
-      speedY: -Math.random() * 0.4 - 0.1, // Sobe suavemente
+      speedY: -Math.random() * 0.4 - 0.1,
       pulseSpeed: Math.random() * 0.02 + 0.005
     });
   }
@@ -56,7 +58,6 @@ function initGalaxyBackground() {
       p.y += p.speedY;
       p.alpha += Math.sin(Date.now() * p.pulseSpeed) * 0.01;
 
-      // Loop ao sair da tela
       if (p.y < 0) p.y = height;
       if (p.x < 0) p.x = width;
       if (p.x > width) p.x = 0;
@@ -73,7 +74,7 @@ function initGalaxyBackground() {
   animate();
 }
 
-// RENDERIZAR APLICAÇÃO (VAZIO OU COM LIVROS REAIS)
+// RENDERIZAR APLICAÇÃO
 function renderApp() {
   const heroSection = document.getElementById('heroSection');
   const emptyState = document.getElementById('emptyState');
@@ -94,7 +95,7 @@ function renderApp() {
   }
 }
 
-// RENDERIZAR TRILHOS DA NETFLIX
+// RENDERIZAR TRILHOS
 function renderTracks(filterText = '') {
   const tracks = {
     romance: document.getElementById('trackRomance'),
@@ -134,7 +135,7 @@ function renderTracks(filterText = '') {
   });
 }
 
-// ATUALIZAR O BANNER HERO
+// ATUALIZAR HERO
 function updateHero(book) {
   if (!book) return;
   selectedBookId = book.id;
@@ -149,7 +150,7 @@ function updateHero(book) {
   document.getElementById('heroSummary').textContent = book.bio || 'Abra o diário de leitura para escrever os destaques desta obra.';
 }
 
-// DROPZONE & EXTRAÇÃO AUTOMÁTICA DO .EPUB
+// DROPZONE & LEITURA REAL DO .EPUB COM FILEREADER
 function setupDropzone() {
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('bookEpubInput');
@@ -172,39 +173,163 @@ function setupDropzone() {
     uploadStatus.style.display = 'block';
 
     Array.from(files).forEach((file, index) => {
-      const cleanTitle = file.name.replace('.epub', '').replace(/_/g, ' ');
-      
-      const newBook = {
-        id: (Date.now() + index).toString(),
-        title: cleanTitle,
-        author: 'Autor Extraído',
-        category: 'romance',
-        cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop',
-        bio: `Livro '${cleanTitle}' adicionado. Abra o Caderno de Leitura para catalogar os aprendizados!`,
-        bestPart: '',
-        favChar: '',
-        favQuote: '',
-        vibe: 'Coração quentinho 💖',
-        notes: [],
-        summary: '',
-        rating: '5'
+      const reader = new FileReader();
+
+      // Converter o arquivo .epub para ArrayBuffer (dados brutos para a ePub.js ler)
+      reader.onload = function(event) {
+        const arrayBuffer = event.target.result;
+
+        // Criar o ePub virtual temporário para extrair título e capa
+        const epub = ePub(arrayBuffer);
+        
+        epub.loaded.metadata.then(meta => {
+          const cleanTitle = meta.title || file.name.replace('.epub', '').replace(/_/g, ' ');
+          const cleanAuthor = meta.creator || 'Autor Desconhecido';
+
+          // Tenta extrair a capa do .epub
+          epub.coverUrl().then(coverUrl => {
+            const finalCover = coverUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop';
+
+            // Armazenar o livro e o buffer do arquivo em Base64 para salvar no localStorage
+            const base64Data = arrayBufferToBase64(arrayBuffer);
+
+            const newBook = {
+              id: (Date.now() + index).toString(),
+              title: cleanTitle,
+              author: cleanAuthor,
+              category: 'romance',
+              cover: finalCover,
+              epubData: base64Data, // DADOS REAIS DO LIVRO SALVOS AQUI
+              bio: `Livro '${cleanTitle}' adicionado. Abra e leia diretamente pelo aplicativo!`,
+              bestPart: '',
+              favChar: '',
+              favQuote: '',
+              vibe: 'Coração quentinho 💖',
+              notes: [],
+              summary: '',
+              rating: '5'
+            };
+
+            books.push(newBook);
+            selectedBookId = newBook.id;
+            saveData();
+
+            setTimeout(() => {
+              uploadStatus.style.display = 'none';
+              dropzone.style.display = 'block';
+              document.getElementById('addModal').classList.remove('active');
+              renderApp();
+            }, 800);
+          }).catch(() => {
+            // Se falhar a capa, usa padrão
+            saveBookFallback(cleanTitle, cleanAuthor, arrayBuffer, index);
+          });
+        }).catch(() => {
+          const cleanTitle = file.name.replace('.epub', '').replace(/_/g, ' ');
+          saveBookFallback(cleanTitle, 'Autor', arrayBuffer, index);
+        });
       };
 
-      books.push(newBook);
-      selectedBookId = newBook.id;
-      saveData();
-
-      setTimeout(() => {
-        uploadStatus.style.display = 'none';
-        dropzone.style.display = 'block';
-        document.getElementById('addModal').classList.remove('active');
-        renderApp();
-      }, 1000);
+      reader.readAsArrayBuffer(file);
     });
+  }
+
+  function saveBookFallback(title, author, arrayBuffer, index) {
+    const base64Data = arrayBufferToBase64(arrayBuffer);
+    const newBook = {
+      id: (Date.now() + index).toString(),
+      title: title,
+      author: author,
+      category: 'romance',
+      cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop',
+      epubData: base64Data,
+      bio: `Livro '${title}' pronto para leitura no aplicativo.`,
+      bestPart: '', favChar: '', favQuote: '', vibe: 'Coração quentinho 💖', notes: [], summary: '', rating: '5'
+    };
+    books.push(newBook);
+    selectedBookId = newBook.id;
+    saveData();
+    uploadStatus.style.display = 'none';
+    dropzone.style.display = 'block';
+    document.getElementById('addModal').classList.remove('active');
+    renderApp();
   }
 }
 
-// SELETOR DE CORAÇÕES / AVALIAÇÃO
+// AUXILIAR: CONVERTER ARRAYBUFFER PARA BASE64
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+// AUXILIAR: CONVERTER BASE64 DE VOLTA PARA ARRAYBUFFER
+function base64ToArrayBuffer(base64) {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+// ABRIR E RENDERIZAR O LEITOR DE EPUB REAL
+function openReader() {
+  const book = books.find(b => b.id === selectedBookId);
+  if (!book || !book.epubData) {
+    alert('O arquivo .epub deste livro não foi encontrado ou não é suportado.');
+    return;
+  }
+
+  document.getElementById('readerBookTitle').textContent = book.title;
+  document.getElementById('readerModal').classList.add('active');
+
+  const viewer = document.getElementById('epubViewer');
+  viewer.innerHTML = '<p style="text-align:center; padding-top:20%; opacity:0.6;">Carregando o livro...</p>';
+
+  try {
+    // Converte os dados do livro salvos de volta para ArrayBuffer
+    const bookData = base64ToArrayBuffer(book.epubData);
+
+    // Destrói leitor anterior se houver
+    if (currentRendition) {
+      currentRendition.destroy();
+    }
+
+    // Inicializa a ePub.js com o livro real
+    currentEpubBook = ePub(bookData);
+    currentRendition = currentEpubBook.renderTo("epubViewer", {
+      width: "100%",
+      height: "100%",
+      spread: "always"
+    });
+
+    // Tema escuro/confortável para a leitura do livro
+    currentRendition.themes.default({
+      'p': { 'color': '#e2e8f0 !important', 'font-size': '1.1rem !important', 'line-height': '1.6 !important' },
+      'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important' },
+      'h1, h2, h3': { 'color': '#c084fc !important' }
+    });
+
+    viewer.innerHTML = '';
+    currentRendition.display();
+
+    // Adiciona evento de teclado/toque para trocar de página
+    document.getElementById('prevPageBtn').onclick = () => currentRendition.prev();
+    document.getElementById('nextPageBtn').onclick = () => currentRendition.next();
+
+  } catch (err) {
+    console.error(err);
+    viewer.innerHTML = `<div style="padding-top:20%; text-align:center;"><p>Erro ao abrir o arquivo .EPUB.</p></div>`;
+  }
+}
+
+// SELETOR DE AVALIAÇÃO
 function setupRatingPicker() {
   const stars = document.querySelectorAll('#ratingPicker span');
   stars.forEach(star => {
@@ -228,7 +353,7 @@ function updateRatingUI(rate) {
   });
 }
 
-// DETALHES DO LIVRO
+// DETALHES
 function openDetailModal(bookId) {
   selectedBookId = bookId;
   const book = books.find(b => b.id === bookId);
@@ -245,7 +370,7 @@ function openDetailModal(bookId) {
   updateHero(book);
 }
 
-// DIÁRIO DE LEITURA (CADERNO AESTHETIC)
+// DIÁRIO DE LEITURA
 function openNotesModal(bookId) {
   const book = books.find(b => b.id === bookId);
   if (!book) return;
@@ -314,7 +439,7 @@ function setupEvents() {
     }
   };
 
-  // IA Sintetizadora do Diário
+  // IA Sintetizadora
   document.getElementById('generateAiSummaryBtn').onclick = () => {
     const book = books.find(b => b.id === selectedBookId);
     const textarea = document.getElementById('finalSummaryText');
@@ -328,7 +453,7 @@ function setupEvents() {
     }, 1000);
   };
 
-  // Salvar Caderno de Leitura
+  // Salvar Caderno
   document.getElementById('saveJournalBtn').onclick = () => {
     const book = books.find(b => b.id === selectedBookId);
     if (book) {
@@ -346,14 +471,6 @@ function setupEvents() {
   };
 }
 
-function openReader() {
-  const book = books.find(b => b.id === selectedBookId);
-  if (!book) return;
-  document.getElementById('readerBookTitle').textContent = book.title;
-  document.getElementById('readerModal').classList.add('active');
-  document.getElementById('epubViewer').innerHTML = `<div style="padding-top:25%; text-align:center;"><h2>📖 Leitor Ativo</h2><p style="opacity:0.7; margin-top:10px;">${book.title}</p></div>`;
-}
-
 function saveData() {
-  localStorage.setItem('livia_books_real_v1', JSON.stringify(books));
+  localStorage.setItem('livia_books_real_v2', JSON.stringify(books));
 }
