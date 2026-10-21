@@ -175,22 +175,16 @@ function setupDropzone() {
     Array.from(files).forEach((file, index) => {
       const reader = new FileReader();
 
-      // Converter o arquivo .epub para ArrayBuffer (dados brutos para a ePub.js ler)
       reader.onload = function(event) {
         const arrayBuffer = event.target.result;
-
-        // Criar o ePub virtual temporário para extrair título e capa
         const epub = ePub(arrayBuffer);
         
         epub.loaded.metadata.then(meta => {
           const cleanTitle = meta.title || file.name.replace('.epub', '').replace(/_/g, ' ');
           const cleanAuthor = meta.creator || 'Autor Desconhecido';
 
-          // Tenta extrair a capa do .epub
           epub.coverUrl().then(coverUrl => {
             const finalCover = coverUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500&auto=format&fit=crop';
-
-            // Armazenar o livro e o buffer do arquivo em Base64 para salvar no localStorage
             const base64Data = arrayBufferToBase64(arrayBuffer);
 
             const newBook = {
@@ -199,7 +193,7 @@ function setupDropzone() {
               author: cleanAuthor,
               category: 'romance',
               cover: finalCover,
-              epubData: base64Data, // DADOS REAIS DO LIVRO SALVOS AQUI
+              epubData: base64Data,
               bio: `Livro '${cleanTitle}' adicionado. Abra e leia diretamente pelo aplicativo!`,
               bestPart: '',
               favChar: '',
@@ -221,7 +215,6 @@ function setupDropzone() {
               renderApp();
             }, 800);
           }).catch(() => {
-            // Se falhar a capa, usa padrão
             saveBookFallback(cleanTitle, cleanAuthor, arrayBuffer, index);
           });
         }).catch(() => {
@@ -256,7 +249,7 @@ function setupDropzone() {
   }
 }
 
-// AUXILIAR: CONVERTER ARRAYBUFFER PARA BASE64
+// AUXILIARES DE CONVERSÃO
 function arrayBufferToBase64(buffer) {
   let binary = '';
   const bytes = new Uint8Array(buffer);
@@ -267,7 +260,6 @@ function arrayBufferToBase64(buffer) {
   return window.btoa(binary);
 }
 
-// AUXILIAR: CONVERTER BASE64 DE VOLTA PARA ARRAYBUFFER
 function base64ToArrayBuffer(base64) {
   const binary_string = window.atob(base64);
   const len = binary_string.length;
@@ -278,7 +270,7 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-// ABRIR LEITOR DE EPUB EM TELA CHEIA 3D
+// ABRIR LEITOR DE EPUB EM TELA CHEIA 3D (MOBILE FIRST)
 function openReader() {
   const book = books.find(b => b.id === selectedBookId);
   if (!book || !book.epubData) {
@@ -301,15 +293,13 @@ function openReader() {
 
     currentEpubBook = ePub(bookData);
     
-    // Configura o leitor para ocupar 100% da tela do celular com efeito de paginação
     currentRendition = currentEpubBook.renderTo("epubViewer", {
       width: "100%",
       height: "100%",
-      flow: "paginated", // Modo página a página (estilo livro)
+      flow: "paginated",
       manager: "continuous"
     });
 
-    // Estilização aconchegante para leitura noturna/diurna
     currentRendition.themes.default({
       'p': { 'color': '#e2e8f0 !important', 'font-size': '1.05rem !important', 'line-height': '1.6 !important', 'text-align': 'justify !important' },
       'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important', 'padding': '20px !important' },
@@ -319,11 +309,11 @@ function openReader() {
     viewer.innerHTML = '';
     currentRendition.display();
 
-    // Suporte a toque nas bordas da tela (Toque na direita avança, toque na esquerda volta)
+    // Toque nas bordas laterais para virar a página
     document.getElementById('touchNext').onclick = () => currentRendition.next();
     document.getElementById('touchPrev').onclick = () => currentRendition.prev();
 
-    // Suporte a gesto de arrastar / deslizar o dedo (Swipe) na tela do celular
+    // Suporte a gesto de deslizar o dedo (Swipe) na tela do celular
     let startX = 0;
     viewer.addEventListener('touchstart', (e) => {
       startX = e.changedTouches[0].screenX;
@@ -332,58 +322,15 @@ function openReader() {
     viewer.addEventListener('touchend', (e) => {
       let endX = e.changedTouches[0].screenX;
       if (startX - endX > 50) {
-        currentRendition.next(); // Deslizou para a esquerda -> Próxima página
+        currentRendition.next();
       } else if (endX - startX > 50) {
-        currentRendition.prev(); // Deslizou para a direita -> Página anterior
+        currentRendition.prev();
       }
     }, false);
 
   } catch (err) {
     console.error(err);
     viewer.innerHTML = `<div style="padding-top:40vh; text-align:center; color:#fff;"><p>Não foi possível carregar este .EPUB.</p></div>`;
-  }
-}
-
-  document.getElementById('readerBookTitle').textContent = book.title;
-  document.getElementById('readerModal').classList.add('active');
-
-  const viewer = document.getElementById('epubViewer');
-  viewer.innerHTML = '<p style="text-align:center; padding-top:20%; opacity:0.6;">Carregando o livro...</p>';
-
-  try {
-    // Converte os dados do livro salvos de volta para ArrayBuffer
-    const bookData = base64ToArrayBuffer(book.epubData);
-
-    // Destrói leitor anterior se houver
-    if (currentRendition) {
-      currentRendition.destroy();
-    }
-
-    // Inicializa a ePub.js com o livro real
-    currentEpubBook = ePub(bookData);
-    currentRendition = currentEpubBook.renderTo("epubViewer", {
-      width: "100%",
-      height: "100%",
-      spread: "always"
-    });
-
-    // Tema escuro/confortável para a leitura do livro
-    currentRendition.themes.default({
-      'p': { 'color': '#e2e8f0 !important', 'font-size': '1.1rem !important', 'line-height': '1.6 !important' },
-      'body': { 'background': '#0c0814 !important', 'color': '#e2e8f0 !important' },
-      'h1, h2, h3': { 'color': '#c084fc !important' }
-    });
-
-    viewer.innerHTML = '';
-    currentRendition.display();
-
-    // Adiciona evento de teclado/toque para trocar de página
-    document.getElementById('prevPageBtn').onclick = () => currentRendition.prev();
-    document.getElementById('nextPageBtn').onclick = () => currentRendition.next();
-
-  } catch (err) {
-    console.error(err);
-    viewer.innerHTML = `<div style="padding-top:20%; text-align:center;"><p>Erro ao abrir o arquivo .EPUB.</p></div>`;
   }
 }
 
@@ -532,6 +479,7 @@ function setupEvents() {
 function saveData() {
   localStorage.setItem('livia_books_real_v2', JSON.stringify(books));
 }
+
 // REGISTRO DE PWA (APLICATIVO)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
