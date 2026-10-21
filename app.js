@@ -474,3 +474,9 @@ function setupEvents() {
 function saveData() {
   localStorage.setItem('livia_books_real_v2', JSON.stringify(books));
 }
+// REGISTRO DE PWA (APLICATIVO)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('Lívia\'s Library PWA Ativo! 💜'))
+    .catch(err => console.log('Erro PWA:', err));
+}
