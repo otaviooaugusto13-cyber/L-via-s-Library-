@@ -314,3 +314,79 @@ body {
   align-items: center;
   padding: 10px 0;
 }
+/* LEITOR DE EPUB TELA CHEIA MOBILE-FIRST (3D / FLIP) */
+.modal.fullscreen-reader {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0c0814;
+  z-index: 9999;
+  flex-direction: column;
+}
+
+.modal.fullscreen-reader.active {
+  display: flex;
+}
+
+.reader-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  background: linear-gradient(to bottom, rgba(12, 8, 20, 0.95), transparent);
+  z-index: 10;
+}
+
+.reader-top-bar h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--lilas-pastel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.btn-icon-back, .btn-icon-notes {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.reader-container-3d {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.epub-viewer-fullscreen {
+  width: 100%;
+  height: 100%;
+  background-color: #0c0814;
+}
+
+/* Zonas de toque nas laterais para virar a página deslizando ou tocando */
+.touch-zone {
+  position: absolute;
+  top: 0;
+  width: 25%;
+  height: 100%;
+  z-index: 5;
+}
+.touch-zone.left { left: 0; }
+.touch-zone.right { right: 0; }
